@@ -1,2 +1,2 @@
 # ps4-test-html
-ps4 webkit test
+PS4 webkit memory allocation test
