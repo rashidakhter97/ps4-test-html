@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+let arr = [];
+
+function spam() {
+    for (let i = 0; i < 10000; i++) {
+        let div = document.createElement("div");
+        div.innerHTML = "PS4_TEST_" + Math.random();
+        document.body.appendChild(div);
+
+        arr.push(new Array(10000).fill(div));
+    }
+}
+
+setInterval(spam, 10);
+</script>
+</body>
+</html>
