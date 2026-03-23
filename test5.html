@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PS4 Max Stress / Memory Corruption</title>
+</head>
+<body>
+<h1>PS4 Memory Stress / Crash Test</h1>
+<script>
+
+// Array to hold references and prevent garbage collection
+let arr = [];
+
+// Function to stress memory + DOM + typed arrays
+function triggerCorruption() {
+    try {
+        // Step 1: allocate large typed arrays
+        for (let i = 0; i < 5000; i++) {
+            let buf = new ArrayBuffer(65536);      // 64KB buffer
+            let view = new Uint8Array(buf);
+            for (let j = 0; j < view.length; j++) {
+                view[j] = i % 256;
+            }
+            arr.push(view);                        // keep reference
+        }
+
+        // Step 2: create DOM nodes rapidly
+        for (let i = 0; i < 2000; i++) {
+            let div = document.createElement("div");
+            div.innerHTML = "STRESS_" + Math.random();
+            document.body.appendChild(div);
+            arr.push(div);                         // prevent GC
+        }
+
+        // Step 3: reuse typed arrays for confusion
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i] instanceof Uint8Array) {
+                arr[i][0] = 255;                   // modify while in use
+            }
+        }
+
+        // Step 4: force allocation pressure
+        for (let i = 0; i < 10000; i++) {
+            let tmp = new ArrayBuffer(32768);      // 32KB temp buffers
+        }
+
+        // Step 5: optionally remove DOM to increase fragmentation
+        while (document.body.children.length > 1000) {
+            document.body.removeChild(document.body.children[0]);
+        }
+    } catch(e) {
+        console.log("Caught error: ", e);
+    }
+}
+
+// Run aggressively every few ms
+let interval = setInterval(triggerCorruption, 5);
+
+</script>
+</body>
+</html>
