@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+
+let arr = [];
+
+function run() {
+    for (let i = 0; i < 5000; i++) {
+        let div = document.createElement("div");
+        div.innerHTML = Math.random();
+
+        document.body.appendChild(div);
+        arr.push(div);
+    }
+
+    // Remove elements aggressively
+    while (document.body.children.length > 1000) {
+        document.body.removeChild(document.body.children[0]);
+    }
+
+}
+
+setInterval(run, 5);
+
+</script>
+</body>
+</html>
