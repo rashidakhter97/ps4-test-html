@@ -1,59 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>PS4 Max Stress / Memory Corruption</title>
+<title>PS4 bug1 Memory Corruption Test</title>
 </head>
 <body>
-<h1>PS4 Memory Stress / Crash Test</h1>
+<h1>PS4 bug1 – Smart Crash / Memory Corruption Test</h1>
 <script>
 
-// Array to hold references and prevent garbage collection
-let arr = [];
+// Arrays to hold references and simulate dangling objects
+let savedBuffers = [];
+let savedDivs = [];
 
-// Function to stress memory + DOM + typed arrays
-function triggerCorruption() {
+function run() {
     try {
-        // Step 1: allocate large typed arrays
-        for (let i = 0; i < 5000; i++) {
-            let buf = new ArrayBuffer(65536);      // 64KB buffer
+        // Step 1: Allocate moderate buffers
+        for (let i = 0; i < 700; i++) {
+            let buf = new ArrayBuffer(8192);  // 8 KB
             let view = new Uint8Array(buf);
-            for (let j = 0; j < view.length; j++) {
-                view[j] = i % 256;
-            }
-            arr.push(view);                        // keep reference
+            view[0] = i % 256;
+
+            savedBuffers.push(view);
         }
 
-        // Step 2: create DOM nodes rapidly
-        for (let i = 0; i < 2000; i++) {
+        // Step 2: Create DOM nodes referencing buffers
+        for (let i = 0; i < 300; i++) {
             let div = document.createElement("div");
-            div.innerHTML = "STRESS_" + Math.random();
+            div.innerHTML = "BufLen: " + savedBuffers[i].length + " ID:" + Math.random();
             document.body.appendChild(div);
-            arr.push(div);                         // prevent GC
+            savedDivs.push(div);
         }
 
-        // Step 3: reuse typed arrays for confusion
-        for (let i = 0; i < arr.length; i++) {
-            if (arr[i] instanceof Uint8Array) {
-                arr[i][0] = 255;                   // modify while in use
+        // Step 3: Drop some references unpredictably to simulate dangling objects
+        for (let i = 0; i < 200; i++) {
+            savedBuffers[i] = null;
+        }
+
+        // Step 4: Memory churn with temporary buffers
+        for (let i = 0; i < 15000; i++) {
+            new ArrayBuffer(4096);
+        }
+
+        // Step 5: Access partially freed buffers (engine confusion)
+        for (let i = 0; i < savedBuffers.length; i++) {
+            if (savedBuffers[i]) {
+                savedBuffers[i][0] = 123;   // potential memory corruption
             }
         }
 
-        // Step 4: force allocation pressure
-        for (let i = 0; i < 10000; i++) {
-            let tmp = new ArrayBuffer(32768);      // 32KB temp buffers
-        }
-
-        // Step 5: optionally remove DOM to increase fragmentation
-        while (document.body.children.length > 1000) {
+        // Step 6: Cleanup some DOM to fragment memory
+        while (document.body.children.length > 200) {
             document.body.removeChild(document.body.children[0]);
         }
+
     } catch(e) {
-        console.log("Caught error: ", e);
+        console.log("Caught exception:", e);
     }
 }
 
-// Run aggressively every few ms
-let interval = setInterval(triggerCorruption, 5);
+// Aggressive interval
+setInterval(run, 3);
 
 </script>
 </body>
