@@ -2,9 +2,48 @@
 <html>
 <body>
 <script>
-while(true) {
-    var a = new Array(1000000).fill("PS4");
+
+let saved;
+
+function run() {
+    try {
+        // Step 1: Create buffer
+        let buf = new ArrayBuffer(256);
+        let view = new Uint8Array(buf);
+
+        view[0] = 42;
+
+        // Step 2: Save reference
+        saved = view;
+
+        // Step 3: Drop original reference
+        buf = null;
+
+        // Step 4: Small memory churn (NOT heavy)
+        for (let i = 0; i < 1000; i++) {
+            new ArrayBuffer(256);
+        }
+
+        // Step 5: Access after possible reuse
+        saved[0] = 99;
+
+        // Step 6: DOM interaction (light)
+        let div = document.createElement("div");
+        div.innerHTML = saved[0];
+        document.body.appendChild(div);
+
+        // Keep DOM small
+        if (document.body.children.length > 50) {
+            document.body.removeChild(document.body.children[0]);
+        }
+
+    } catch(e) {
+        console.log(e);
+    }
 }
+
+setInterval(run, 1);
+
 </script>
 </body>
 </html>
