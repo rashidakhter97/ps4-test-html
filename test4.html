@@ -47,31 +47,3 @@ setInterval(run, 1);
 </script>
 </body>
 </html>
-        // Step 4: Memory churn with temporary buffers
-        for (let i = 0; i < 15000; i++) {
-            new ArrayBuffer(4096);
-        }
-
-        // Step 5: Access partially freed buffers (engine confusion)
-        for (let i = 0; i < savedBuffers.length; i++) {
-            if (savedBuffers[i]) {
-                savedBuffers[i][0] = 123;   // potential memory corruption
-            }
-        }
-
-        // Step 6: Cleanup some DOM to fragment memory
-        while (document.body.children.length > 200) {
-            document.body.removeChild(document.body.children[0]);
-        }
-
-    } catch(e) {
-        console.log("Caught exception:", e);
-    }
-}
-
-// Aggressive interval
-setInterval(run, 3);
-
-</script>
-</body>
-</html>
