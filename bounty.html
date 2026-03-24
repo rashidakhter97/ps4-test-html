@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PS4 bug1 Memory Corruption Test</title>
+</head>
+<body>
+<h1>PS4 bug1 – Smart Crash / Memory Corruption Test</h1>
+<script>
+
+// Arrays to hold references and simulate dangling objects
+let savedBuffers = [];
+let savedDivs = [];
+
+function run() {
+    try {
+        // Step 1: Allocate moderate buffers
+        for (let i = 0; i < 700; i++) {
+            let buf = new ArrayBuffer(8192);  // 8 KB
+            let view = new Uint8Array(buf);
+            view[0] = i % 256;
+
+            savedBuffers.push(view);
+        }
+
+        // Step 2: Create DOM nodes referencing buffers
+        for (let i = 0; i < 300; i++) {
+            let div = document.createElement("div");
+            div.innerHTML = "BufLen: " + savedBuffers[i].length + " ID:" + Math.random();
+            document.body.appendChild(div);
+            savedDivs.push(div);
+        }
+
+        // Step 3: Drop some references unpredictably to simulate dangling objects
+        for (let i = 0; i < 200; i++) {
+            savedBuffers[i] = null;
+        }
+
+        // Step 4: Memory churn with temporary buffers
+        for (let i = 0; i < 15000; i++) {
+            new ArrayBuffer(4096);
+        }
+
+        // Step 5: Access partially freed buffers (engine confusion)
+        for (let i = 0; i < savedBuffers.length; i++) {
+            if (savedBuffers[i]) {
+                savedBuffers[i][0] = 123;   // potential memory corruption
+            }
+        }
+
+        // Step 6: Cleanup some DOM to fragment memory
+        while (document.body.children.length > 200) {
+            document.body.removeChild(document.body.children[0]);
+        }
+
+    } catch(e) {
+        console.log("Caught exception:", e);
+    }
+}
+
+// Aggressive interval
+setInterval(run, 3);
+
+</script>
+</body>
+</html>
